@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Doze Fall Detector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+            margin: 20px 0;
+        }
+        .video-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            border: 2px solid #333;
+            width: 600px;
+            height: 600px;
+        }
+        .video-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .status-container {
+            margin: 20px 0;
+            text-align: center;
+            background-color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            color: #333;
+        }
+        .status {
+            font-size: 1.2em;
+            color: #333;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 1em;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Doze Fall Detector</h1>
+    <div class="video-container">
+        <img src="{{ url_for('video_feed') }}" alt="Video Feed">
+    </div>
+    <div class="status-container">
+        <h2> <span id="status">Loading...</span></h2>
+    </div>
+    <div class="button-container">
+        <button onclick="resetCounter('doze')">Reset Doze</button>
+        <button onclick="resetCounter('fall')">Reset Fall</button>
+        <button onclick="stopScript()">Stop Script</button>
+    </div>
+
+    <script>
+        if (!!window.EventSource) {
+            var source = new EventSource("{{ url_for('status_feed') }}");
+
+            source.onmessage = function(event) {
+                document.getElementById("status").innerHTML = event.data;
+            };
+
+            source.onerror = function() {
+                document.getElementById("status").innerHTML = 'System shutdown';
+            };
+        } else {
+            document.getElementById("status").innerHTML = 'Your browser does not support Server-Sent Events.';
+        }
+
+        function resetCounter(counter) {
+            fetch(`reset_${counter}`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert(`${counter.charAt(0).toUpperCase() + counter.slice(1)} counter reset successfully.`);
+                } else {
+                    alert(`Failed to reset ${counter} counter.`);
+                }
+            });
+        }
+
+        function stopScript() {
+            fetch('stop_script', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    alert('Script stopped successfully.');
+                } else {
+                    alert('Failed to stop the script.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
